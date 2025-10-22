@@ -19,12 +19,17 @@ router.post('/', auth, async (req, res) => {
     await newPost.populate('user', 'name email');
 
     res.status(201).json({
+      success: true, // ✅ Added success property
       message: 'Post created successfully',
       post: newPost
     });
   } catch (error) {
     console.error('Create post error:', error);
-    res.status(500).json({ message: 'Post creation failed', error: error.message });
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Post creation failed', 
+      error: error.message 
+    });
   }
 });
 
@@ -39,7 +44,11 @@ router.get('/', async (req, res) => {
     res.json(posts);
   } catch (error) {
     console.error('Get posts error:', error);
-    res.status(500).json({ message: 'Failed to fetch posts', error: error.message });
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Failed to fetch posts', 
+      error: error.message 
+    });
   }
 });
 
@@ -49,7 +58,10 @@ router.post('/:postId/like', auth, async (req, res) => {
     const userId = req.user.id;
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ 
+        success: false, // ✅ Added success property
+        message: 'Post not found' 
+      });
     }
 
     const alreadyLiked = post.likes.some(like => like.user.toString() === userId);
@@ -71,7 +83,11 @@ router.post('/:postId/like', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Like error:', error);
-    res.status(500).json({ message: 'Failed to like post', error: error.message });
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Failed to like post', 
+      error: error.message 
+    });
   }
 });
 
@@ -80,13 +96,19 @@ router.post('/:postId/comment', auth, async (req, res) => {
     const { text } = req.body;
     
     if (!text || !text.trim()) {
-      return res.status(400).json({ message: 'Comment text is required' });
+      return res.status(400).json({ 
+        success: false, // ✅ Added success property
+        message: 'Comment text is required' 
+      });
     }
 
     const post = await Post.findById(req.params.postId);
     
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ 
+        success: false, // ✅ Added success property
+        message: 'Post not found' 
+      });
     }
     
     post.comments.push({
@@ -105,7 +127,11 @@ router.post('/:postId/comment', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Comment error:', error);
-    res.status(500).json({ message: 'Failed to add comment', error: error.message });
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Failed to add comment', 
+      error: error.message 
+    });
   }
 });
 
@@ -116,23 +142,46 @@ router.get('/my-posts', auth, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch user posts' });
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Failed to fetch user posts' 
+    });
   }
 });
 
+// ✅ FIXED: Delete route with proper response format
 router.delete('/:postId', auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
+    
+    if (!post) {
+      return res.status(404).json({ 
+        success: false, // ✅ Added success property
+        message: 'Post not found' 
+      });
+    }
     
     if (post.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ 
+        success: false, // ✅ Added success property
+        message: 'Not authorized to delete this post' 
+      });
     }
     
     await Post.findByIdAndDelete(req.params.postId);
-    res.json({ message: 'Post deleted successfully' });
+    
+    res.json({ 
+      success: true, // ✅ Added success property
+      message: 'Post deleted successfully' 
+    });
+    
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete post' });
+    console.error('Delete post error:', error);
+    res.status(500).json({ 
+      success: false, // ✅ Added success property
+      message: 'Failed to delete post',
+      error: error.message 
+    });
   }
 });
 
