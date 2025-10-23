@@ -52,6 +52,11 @@ const sendVerificationCode = async (email, verificationCode) => {
       return true; // Still return true so registration continues
     }
 
+    // ✅ ADDED: Frontend URL for verification link
+    const frontendUrl = process.env.FRONTEND_URL || 'https://your-frontend-url.onrender.com';
+    const verificationLink = `${frontendUrl}/verify/${verificationCode}`;
+    
+
     const mailOptions = {
       from: `"MBSTU Research Gate" <${process.env.GMAIL_USER}>`,
       to: email,
