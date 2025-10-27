@@ -41,56 +41,47 @@ if (transporter) {
 }
 
 // ✅ FIXED: Send verification code with fallback
+// emailService.js - Updated version
 const sendVerificationCode = async (email, verificationCode) => {
   try {
     console.log('🟡 Attempting to send email to:', email);
     
-    // ✅ FIXED: If no transporter (no credentials), use test mode
-    if (!transporter) {
-      console.log(`🎯 TEST MODE - Verification code for ${email}: ${verificationCode}`);
-      console.log('ℹ️  Email credentials not configured. Code shown in console.');
-      return true; // Still return true so registration continues
+    // ✅ FIXED: Better error handling for missing credentials
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+      console.log(`❌ EMAIL CREDENTIALS MISSING - Code for ${email}: ${verificationCode}`);
+      console.log('⚠️  Please set GMAIL_USER and GMAIL_PASS in environment variables');
+      return false; // Return false so frontend knows email failed
     }
 
-    // ✅ ADDED: Frontend URL for verification link
-    const frontendUrl = process.env.FRONTEND_URL || 'https://your-frontend-url.onrender.com';
-    const verificationLink = `${frontendUrl}/verify/${verificationCode}`;
-    
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+      }
+    });
 
     const mailOptions = {
       from: `"MBSTU Research Gate" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: 'Your Verification Code - MBSTU Research Gate',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-          <h2 style="color: #2c3e50; text-align: center;">MBSTU Research Gate</h2>
-          <h3 style="color: #333;">Email Verification Code</h3>
-          <p>Hello,</p>
-          <p>Your verification code is:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <span style="font-size: 32px; font-weight: bold; color: #e74c3c; letter-spacing: 5px; padding: 10px 20px; border: 2px dashed #e74c3c; border-radius: 5px;">
-              ${verificationCode}
-            </span>
-          </div>
-          <p>Enter this code on the verification page to activate your account.</p>
-          <p style="color: #7f8c8d; font-size: 12px;">This code will expire in 10 minutes.</p>
-          <p style="color: #7f8c8d; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2c3e50;">Email Verification Code</h2>
+          <p>Your verification code is: <strong>${verificationCode}</strong></p>
+          <p>This code will expire in 10 minutes.</p>
         </div>
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     console.log('✅ Verification code sent to:', email);
-    console.log('✅ Message ID:', info.messageId);
     return true;
+    
   } catch (error) {
     console.log('❌ Email sending failed:', error.message);
-    
-    // ✅ FIXED: Fallback - show code in console and continue
     console.log(`🎯 FALLBACK - Verification code for ${email}: ${verificationCode}`);
-    console.log('ℹ️  Registration continues despite email failure');
-    return true; // Still return true so registration doesn't fail
+    return false;
   }
 };
-
 module.exports = { sendVerificationCode };
