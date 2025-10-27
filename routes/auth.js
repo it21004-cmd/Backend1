@@ -65,11 +65,14 @@ router.post('/register', async (req, res) => {
     
     // ✅ FIXED: Always return needsVerification: true
     res.status(201).json({ 
-      success: true,
-      message: 'Registration successful! Verification code sent to your email.',
-      email: email,
-      needsVerification: true  // ✅ এই লাইন সবসময় থাকবে
-    });
+  success: true,
+  message: emailSent 
+    ? 'Registration successful! Verification code sent to your email.'
+    : 'Registration successful! But failed to send email. Please contact support.',
+  email: email,
+  needsVerification: true,
+  emailSent: emailSent  // ✅ Frontend কে জানান email sent হয়েছে কিনা
+});
     
   } catch (error) {
     console.error('🔴 Registration error:', error);
